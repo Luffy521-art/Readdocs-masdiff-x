@@ -11,7 +11,6 @@ nav:
   - 首页: index.md
   - 入门指南:
       - 项目简介1: project-overview1.md
-      - 项目简介2: project-overview2.md
       - 快速开始: quickstart.md
       - 配置系统: configuration.md
   - 核心概念:
