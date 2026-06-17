@@ -1,1 +1,11 @@
+site_name: 我的项目文档
+site_url: !ENV READTHEDOCS_CANONICAL_URL
 
+# 主题：经典 RTD 风格，也可换成 material
+theme:
+  name: readthedocs
+
+# 左侧导航栏
+nav:
+  - 首页: index.md
+  - 使用说明: usage.md
