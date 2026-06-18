@@ -28,7 +28,6 @@ $$\mathcal{L}(\theta) = \frac{1}{2} \log(2\pi\sigma^2) + \frac{(\rho - \mu)^2}{2
 
 $$\mathcal{L}(\theta) = \frac{1}{2} \left( v + \frac{(\rho - \mu)^2}{\exp(v)} \right) + C$$
 
-*(注：常数项 $C = \frac{1}{2}\log(2\pi)$ 在计算梯度时会被消除，代码实现中可省略。)*
 
 ### 3. 损失函数的自适应博弈机制
 * **当模型预测准确时：** $(\rho - \mu)^2$ 很小，模型为了进一步降低 Loss，会主动缩小 $v$（即减小方差，表现出“自信”）。
