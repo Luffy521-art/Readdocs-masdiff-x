@@ -1,4 +1,4 @@
-<img width="4500" height="3600" alt="training_curves_dashboard" src="https://github.com/user-attachments/assets/1b37ecff-f563-4708-98a3-058db0601b39" /># 基于大模型隐状态的 Rho 预测代理模型：特征、设计与实验验证
+# 基于大模型隐状态的 Rho 预测代理模型：特征、设计与实验验证
 
 ## 1 任务定义
 本文档描述一个基于大型语言模型（LLM, 本实验采用 Qwen 系列）原生隐状态编码，学习条件预测分布的轻量级代理模型（Surrogate Model）。不同于传统的点估计回归，本模型学习的对象是一个条件概率分布 $p(\rho | \tau_{hidden}, M_{action})$。
