@@ -1,4 +1,4 @@
-# 基于大模型隐状态的 Rho 预测代理模型：特征、设计与实验验证
+<img width="4500" height="3600" alt="training_curves_dashboard" src="https://github.com/user-attachments/assets/1b37ecff-f563-4708-98a3-058db0601b39" /># 基于大模型隐状态的 Rho 预测代理模型：特征、设计与实验验证
 
 ## 1 任务定义
 本文档描述一个基于大型语言模型（LLM, 本实验采用 Qwen 系列）原生隐状态编码，学习条件预测分布的轻量级代理模型（Surrogate Model）。不同于传统的点估计回归，本模型学习的对象是一个条件概率分布 $p(\rho | \tau_{hidden}, M_{action})$。
@@ -47,6 +47,7 @@ $$\mathcal{L}_{NLL} = -\log p(\rho_{true} | \tau_{hidden}, M_{action})$$
 
 ## 5 实验结果与可视化分析
 本次实验共迭代 30 个 Epoch（$Batch\_Size = 8, LR = 1e-4$）。根据生成的 Dashboard 与终端日志，模型表现出极佳的收敛与泛化能力。
+<img width="4500" height="3600" alt="training_curves_dashboard" src="https://github.com/user-attachments/assets/d3b73d5f-50ec-476a-877c-e41209c987c7" />
 
 ### 5.1 损失函数收敛分析 (Train vs Test Loss)
 * **表现**：从 Loss 演进曲线可以看出，Train Loss 与 Test Loss 均呈现平滑下降趋势。Test Loss 从最初的 $-0.1569$ 稳步下降至 $-2.3077$。
