@@ -18,7 +18,11 @@ nav:
       - 核心数据结构: data-structures.md
   - 模块接口: api-reference.md
   - 开发扩展: development.md
-  - 预测模型: predict2.md
+  - 代理模型: 
+      - 初想: predict2.md
+      - 定义与设计: predict3.md
+      - 改进树: tree.md
+      - 分支1: branch1.md
 
 
 markdown_extensions:
