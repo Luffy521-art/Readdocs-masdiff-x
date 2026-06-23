@@ -1,93 +1,87 @@
-基于大模型隐状态与 PRM 的 Rho 预测代理模型
-============================================
+# 基于大模型隐状态与 PRM 的 Rho 预测代理模型
 
-任务定义
---------
 
-本任务旨在训练一个轻量级的代理模型（Surrogate Model）。模型接收大语言模型生成的隐状态特征（:math:`\tau_{hidden}`）和过程奖励打分（:math:`R_{prm}`），输出一个条件概率分布 :math:`p(\rho \mid \tau_{hidden}, R_{prm}, M_{action})`。
 
-在测试阶段，模型输出 Student-t 分布的参数 :math:`(\mu, \sigma, \nu)`，并以分布均值作为最终预测得分：
+## 1 任务定义
 
-.. math::
+本任务旨在训练一个轻量级的代理模型（Surrogate Model）。模型接收大语言模型生成的隐状态特征（$\tau_{hidden}$）和过程奖励打分（$R_{prm}$），输出一个条件概率分布 $p(\rho | \tau_{hidden}, R_{prm}, M_{action})$。
 
-   \hat{\rho} = \mu
 
-数据集特征
-----------
+
+在测试阶段，模型输出 Student-t 分布的参数 $(\mu, \sigma, \nu)$，并以分布均值作为最终预测得分：
+
+$$\hat{\rho} = \mu$$
+
+
+
+## 2 数据集特征
 
 数据集由大模型的前向传播无损截取，核心字段包括：
 
-``hidden_state``
-   大模型输出的高维语义张量，维度为 :math:`[Batch, Seq\_Len, 2560]`。
+* **`hidden_state`**：大模型输出的高维语义张量，维度为 $[Batch, Seq\_Len, 2560]$。
 
-``prm``
-   过程奖励模型（PRM）的密集打分，维度为 :math:`[Batch, Seq\_Len]`。
+* **`prm`**：过程奖励模型（PRM）的密集打分，维度为 $[Batch, Seq\_Len]$。
 
-``action_mask``
-   有效动作掩码，用于区分有效 Token 与 Padding 填充区域。
+* **`action_mask`**：有效动作掩码，用于区分有效 Token 与 Padding 填充区域。
 
-``rho``
-   真实环境评估得到的最终得分，作为目标标签。
+* **`rho`**：真实环境评估得到的最终得分，作为目标标签。
 
-模型设计
---------
+
+
+## 3 模型设计
 
 采用极简联合架构提取并融合特征：
 
-动态对齐
-   对 ``hidden_state``、``prm`` 和 ``action_mask`` 在序列长度上进行动态截断对齐。
+* **动态对齐**：对 `hidden_state`、`prm` 和 `action_mask` 在序列长度上进行动态截断对齐。
 
-PRM 升维投影
-   通过 ``Linear(1, 64) -> LayerNorm -> GELU``，将 1 维的 PRM 打分升维至 64 维，拉平特征量级。
+* **PRM 升维投影**：通过 `Linear(1, 64)` -> `LayerNorm` -> `GELU`，将 1 维的 PRM 打分升维至 64 维，拉平特征量级。
 
-特征拼接与池化
-   将 2560 维隐状态与 64 维 PRM 特征拼接为 2624 维。随后结合 ``action_mask`` 进行掩码均值池化（Masked Mean Pooling），提取全局定长句向量。
+* **特征拼接与池化**：将 2560 维隐状态与 64 维 PRM 特征拼接为 2624 维。随后结合 `action_mask` 进行掩码均值池化（Masked Mean Pooling），提取全局定长句向量。
 
-预测头
-   利用两层 MLP（引入 Dropout）将特征映射为 Student-t 分布的三个标量参数 :math:`(\mu, \sigma, \nu)`。
+* **预测头**：利用两层 MLP（引入 Dropout）将特征映射为 Student-t 分布的三个标量参数 $(\mu, \sigma, \nu)$。
 
-损失函数设计
-------------
 
-模型采用 Student-t 的负对数似然（NLL）作为主损失函数。相比传统的 MSE，Student-t 具有更厚的尾部，能自适应调整置信度 :math:`\sigma`，有效抵抗极端打分（Outliers）的干扰：
 
-.. math::
+## 4 损失函数设计
 
-   \mathcal{L}_{NLL} = -\log p(\rho_{true} \mid \tau_{hidden}, R_{prm}, M_{action})
+模型采用 Student-t 的负对数似然（NLL）作为主损失函数。相比传统的 MSE，Student-t 具有更厚的尾部，能自适应调整置信度 $\sigma$，有效抵抗极端打分（Outliers）的干扰：
 
-实验结果
---------
+$$\mathcal{L}_{NLL} = -\log p(\rho_{true} | \tau_{hidden}, R_{prm}, M_{action})$$
+
+
+
+## 5 实验结果
 
 使用 320 条小样本数据，在引入 PRM 独立投影层后进行 30 轮迭代，结果如下：
 
-损失函数收敛平滑
-   Train Loss 与 Test Loss 呈现完美的同步下降趋势，证明独立投影层配合 Dropout 有效稳定了梯度，规避了过拟合。
+* **损失函数收敛平滑**：Train Loss 与 Test Loss 呈现完美的同步下降趋势，证明独立投影层配合 Dropout 有效稳定了梯度，规避了过拟合。
 
-核心指标表现受限
-   测试集最高排序准确率仅达到 **50.08%**，Pearson 相关系数最高为 0.44，:math:`R^2` 勉强转正为 0.19。
+* **核心指标表现受限**：测试集最高排序准确率仅达到 **50.08%**，Pearson 相关系数最高为 0.44，$R^2$ 勉强转正为 0.19。
 
-结论
-   虽然模型在数学优化上正常收敛，且不确定度 :math:`\sigma` 指数级下降，但 50% 的排序准确率表明模型退化至随机猜测水平。联合输入 PRM 与隐状态后，模型并未取得预期收益，反而丧失了单一特征下的判别能力。
+* **结论**：虽然模型在数学优化上正常收敛，且不确定度 $\sigma$ 指数级下降，但 50% 的排序准确率表明模型退化至随机猜测水平。联合输入 PRM 与隐状态后，模型并未取得预期收益，反而丧失了单一特征下的判别能力。
 
-.. image:: https://github.com/user-attachments/assets/b50012c3-ddb1-4589-acb5-1eccd103169b
-   :width: 100%
-   :alt: training_curves_dashboard_prm_proj
+<img width="4500" height="3600" alt="training_curves_dashboard_prm_proj" src="https://github.com/user-attachments/assets/b50012c3-ddb1-4589-acb5-1eccd103169b" />
 
-问题分析
---------
+
+
+## 6 问题分析
 
 经过对训练日志与预测散点分布的深度诊断，导致 PRM 融合后性能塌陷的核心归因如下：
 
 1. **均值池化（Mean Pooling）对密集信号的破坏**：PRM 的核心价值在于提供步骤级（Token-level）的细粒度反馈。在逻辑推理或代码生成中，某一步的致命错误会导致全局崩溃（木桶效应）。当前的掩码均值池化操作将长序列的 PRM 强行拉平，直接抹杀了局部的致命惩罚信号，导致特征严重失真。
+
 2. **特征语义冲突**：大模型的隐状态（高维语义）与 PRM（标量评价）分属完全不同的信息维度。在同一维度硬拼接并执行全局池化，导致两种信号相互干扰，MLP 无法建立起局部的因果映射，最终选择输出保守的均值附近数值（散点图呈垂直柱状分布）。
 
-改进
-----
+
+
+## 7 改进
 
 针对上述特征融合失效问题，制定以下后续演进分支：
 
-分支 1: 改进密集信号聚合机制 (Advanced Signal Aggregation)
-   废弃简单的均值池化。针对 PRM 信号，考虑引入 ``Min-Pooling``（捕获最差步骤）或 ``Attention Pooling``（让模型动态聚焦关键步骤）。对于隐状态与 PRM 的融合，考虑在池化后再进行深层拼接，或使用交叉注意力（Cross-Attention）机制隔离两者的特征流。
+* **分支 1: 改进密集信号聚合机制 (Advanced Signal Aggregation)**
 
-分支 2: 数据规模验证 (Data Scaling)
-   在优化网络聚合算子的同时，利用并行生成框架将数据集规模扩充至 2000~5000 条，以排除小样本带来的分布偏移干扰，为新算子提供充足的拟合空间。
+  废弃简单的均值池化。针对 PRM 信号，考虑引入 `Min-Pooling`（捕获最差步骤）或 `Attention Pooling`（让模型动态聚焦关键步骤）。对于隐状态与 PRM 的融合，考虑在池化后再进行深层拼接，或使用交叉注意力（Cross-Attention）机制隔离两者的特征流。
+
+* **分支 2: 数据规模验证 (Data Scaling)**
+
+  在优化网络聚合算子的同时，利用并行生成框架将数据集规模扩充至 2000~5000 条，以排除小样本带来的分布偏移干扰，为新算子提供充足的拟合空间。
