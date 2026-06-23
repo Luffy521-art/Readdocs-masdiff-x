@@ -22,4 +22,5 @@ $$\hat{\rho} = \mu$$
 
 ## 4 损失函数设计
 模型采用 Student-t 的负对数似然（NLL）作为主损失函数。相比传统的 MSE，Student-t 具有更厚的尾部，能自适应调整置信度 $\sigma$，有效抵抗极端打分（Outliers）的干扰：
+
 $$\mathcal{L}_{NLL} = -\log p(\rho_{true} | \tau_{hidden}, R_{prm}, M_{action})$$
