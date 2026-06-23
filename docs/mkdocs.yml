@@ -21,8 +21,9 @@ nav:
   - 代理模型: 
       - 初想: predict2.md
       - 定义与设计: predict3.md
-      - 改进树: tree.md
-      - 分支1: branch1.md
+      - 实验结果与分析: branch1.md
+      # - 改进树: tree.md
+      # - 分支1: branch1.md
 
 
 markdown_extensions:
