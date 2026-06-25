@@ -24,6 +24,7 @@ nav:
       - 实验结果与分析: branch1.md
       # - 改进树: tree.md
       # - 分支1: branch1.md
+  - 20260624-25：20260624-25样本数据问题.md
 
 
 markdown_extensions:
