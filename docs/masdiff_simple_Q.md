@@ -16,7 +16,7 @@
 --- 隐状态统计分析 --- <br>
 第4轮方差(std): 1.521111 <br>
 第5轮方差(std): 1.519077 <br>
-<img width="1000" height="600" alt="tau_distribution_pca" src="https://github.com/user-attachments/assets/6f0308f5-dd35-4cd5-ac33-c48e187b5ff9" />
+<img width="1000" height="600" alt="tau_distribution_pca" src="https://github.com/user-attachments/assets/6f0308f5-dd35-4cd5-ac33-c48e187b5ff9" /> <br>
 分析：方差几乎没有变化，说明第5轮模型生成的隐状态集合，在特征空间中的覆盖范围与第4轮完全一致，排除了模型只会生成一种回答的可能，也没有丢失原本的推理能力；PCA投影图中第五轮有部分红点出现了，第四轮蓝点没有覆盖的区域，说明在第五轮强行探索了新的、且此前从未出现过的隐状态模式。<br>
 
 * #### 检查是否是在第四轮时出现rho是0分但奖励偏高，且回答是xml格式的部分<br>
