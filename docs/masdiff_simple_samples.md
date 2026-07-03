@@ -38,3 +38,6 @@ AI Score Mean Delta
 <img width="3520" height="1100" alt="ai_score_iteration_mean" src="https://github.com/user-attachments/assets/7c1fcf07-2e39-415c-8e9b-1263dc6fe739" />
 AI Score Mean by Iteration
 纵轴是 ai score，横轴是 iteration，画的是每一轮的均值和中位数。看法是看曲线是否逐轮上升、下降或波动。它表示整体质量随训练轮次的变化轨迹。效果是最适合做总览图，直接回答“模型平均质量有没有提高”，比逐样本图更容易读。
+
+
+### 样本字段: ['iteration', 'model_index', 'is_mutant', 'prompt', 'response_text', 'rho', 'hidden_state', 'sequences', 'action_mask', 'logits', 'prm']
