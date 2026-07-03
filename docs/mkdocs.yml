@@ -22,9 +22,13 @@ nav:
       - 初想: predict2.md
       - 定义与设计: predict3.md
       - 实验结果与分析: branch1.md
+      - 20260624-25: 20260624-25样本数据问题.md
       # - 改进树: tree.md
       # - 分支1: branch1.md
-  - 20260624-25: 20260624-25样本数据问题.md
+  - masdiff_simple:
+      - 框架: masdiff_simple_framework.md
+      - 样本数据分析: masdiff_simple_samoles.md
+      - 问题分析与改进: masdiff_simple_Q.md
 
 
 markdown_extensions:
