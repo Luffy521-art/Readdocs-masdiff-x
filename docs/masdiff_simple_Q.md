@@ -21,7 +21,7 @@
 
 * #### 检查是否是在第四轮时出现rho是0分但奖励偏高，且回答是xml格式的部分<br>
 <img width="979" height="563" alt="image" src="https://github.com/user-attachments/assets/a6e11378-c3d1-4d38-b439-e1939e8a6c65" />
-<img width="614" height="191" alt="image" src="https://github.com/user-attachments/assets/48c75e79-da8c-402b-a1c0-2d0966dbae83" />
+<img width="614" height="191" alt="image" src="https://github.com/user-attachments/assets/48c75e79-da8c-402b-a1c0-2d0966dbae83" /> <br>
 分析：<br>
 1.ai打分理由：几乎rho为的理由都是重复路网文件和不完整的xml标签<br>
 2.38 个回答的高分hidden_states趋于一致，如果这些样本的 prm 高分不是因为 XML 格式，那它们之间就不会表现出这种高度的特征聚集。<br>
