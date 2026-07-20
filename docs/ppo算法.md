@@ -67,3 +67,8 @@ $$
 2. **Critic**：感知到该输入能带来高分，下次预测 $V_i$ 时会提高该状态的评分。
 3. **Reference**：计算与原始 Qwen2.5-3B 的 KL 散度。若 Actor 走得太远 (变得不认识原始语言)，KL 惩罚项将变大并拉回 Actor。
 4. **反向传播**：模型权重朝着“生成类似 prompt_idx=0 高分回复的概率方向”移动了一小步。
+
+
+
+<img width="2816" height="1536" alt="Gemini_Generated_Image_yr4s97yr4s97yr4s" src="https://github.com/user-attachments/assets/1261083f-7336-4a6b-9779-ce3192acc562" />
+<img width="2816" height="1536" alt="Gemini_Generated_Image_yr4s97yr4s97yr4s (1)" src="https://github.com/user-attachments/assets/1bf75fa4-c42e-4f93-8c8c-a267bc7e7da6" />
