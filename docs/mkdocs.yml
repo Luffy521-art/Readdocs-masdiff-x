@@ -29,6 +29,7 @@ nav:
       - 框架: masdiff_simple_framework.md
       - 样本数据分析: masdiff_simple_samples.md
       - 问题分析与改进: masdiff_simple_Q.md
+  - ppo算法: ppo算法.md
 
 
 markdown_extensions:
