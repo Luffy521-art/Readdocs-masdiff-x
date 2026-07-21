@@ -11,37 +11,41 @@ PPO 算法训练流程详解
 1. **Prompt 输入**：从训练集中提取 Prompt。
 2. **Actor 采样 (Sampling)**：Actor 根据当前权重 $\theta_{old}$，对输入的 Prompt 进行 autoregressive (自回归) 采样，生成对应的回复。
    
-   * **注意**：除生成回复外，系统还会记录模型对每个 token 的对数概率 (Log Probabilities)，这是后续计算 ``ratio`` 的关键。
+   * **注意**：除生成回复外，系统还会记录模型对每个 token 的对数概率 (Log Probabilities)，这是后续计算 `ratio` 的关键。
 3. **Reward 打分 (Reward Modeling)**：
    
    * 将生成的回复送入 Reward 模型 (如 DeepSeek-v4-flash)。
    * Reward 模型输出标量分数 $r_i$。
    * **关键处理**：不仅使用 $r_i$，通常还会结合 Reference 模型 (冻结的初始模型) 计算 KL 散度惩罚。
-   * **最终奖励公式**：$R_i = r_i - \beta \cdot KL(Actor || Ref)$
+   * **最终奖励公式**：
+     
+     $$
+     R_i = r_i - \beta \cdot KL(Actor || Ref)
+     $$
    * **作用**：防止 Actor 为骗取高分而产生乱码或偏离原始语言风格。
 
 第二阶段：策略优化 (Policy Optimization / Gradient Update)
 --------------------------------------------------------
 
-本阶段利用样本的 $R_i$ 进行模型参数 $\theta$ 的更新：
+本阶段利用样本的 $R_i$ 进行模型参数 $\theta$ 的更新。在此过程中，系统处理的 80 个样本并不是被平均算成一个全局标量，而是让每个样本独立参与计算：
 
 ### 1. 优势估计 (Advantage Estimation)
 
 Critic 模型 (Qwen2.5-3B，参数不同) 在此发挥作用：
 
-* **价值评估**：Critic 对 80 个样本的当前状态评估一个价值 $V_i$。
-* **优势函数**：$A_i = R_i - V_i$。
+* **价值评估**：Critic 对 80 个样本的当前状态评估一个价值 $V_i$。这里的 $V_i$ 不是单一的全局标量，而是一个与每一个 token 一一对应的序列（向量），其维度通常为 `[Batch Size, Sequence Length]`，用于在每个时间步进行精细对比。
+* **优势函数**：$A_i = R_i - V_i$。系统会为这 80 个样本逐一计算出它们各自独立的优势值 ($A_1, A_2, \dots, A_{80}$)。
 * **解释**：若 $A_i > 0$，说明生成的回复优于 Critic 的预期，Actor 应增加生成该回复的概率。
 
 ### 2. 计算 PPO Loss (目标函数)
 
-不再直接使用 $A_i$ 更新，而是通过对比新旧策略的 ``ratio``：
+不再直接使用 $A_i$ 更新，而是通过对比新旧策略的 `ratio`：
 
 $$
 \text{ratio} = \frac{\pi_{\theta}(response|prompt)}{\pi_{\theta_{old}}(response|prompt)}
 $$
 
-该 ``ratio`` 反映了当前模型对于“高分回复”的倾向程度。
+该 `ratio` 反映了当前模型对于“高分回复”的倾向程度。
 
 **目标函数公式**：
 
@@ -49,13 +53,18 @@ $$
 L(\theta) = \mathbb{E}[\min(\text{ratio} \cdot A_i, \text{clip}(\text{ratio}, 1 - \epsilon, 1 + \epsilon) \cdot A_i)]
 $$
 
-* **Clip 的精髓**：强制 ``ratio`` 限制在 $[1-\epsilon, 1+\epsilon]$ 之间 (通常为 0.8 到 1.2)。
-* **物理意义**：若新模型在某样本上改进过激，``ratio`` 超过范围，clip 操作将进行截断。这保证了模型更新的平稳性，避免因个别高分样本导致灾难性偏移。
+* **Clip 的精髓**：强制 `ratio` 限制在 $[1-\epsilon, 1+\epsilon]$ 之间 (通常为 0.8 到 1.2)。
+* **物理意义**：若新模型在某样本上改进过激，`ratio` 超过范围，clip 操作将进行截断。这保证了模型更新的平稳性，避免因个别高分样本导致灾难性偏移。
 
 ### 3. 梯度反向传播 (Backward Pass)
 
-* 计算目标函数 $L(\theta)$ 对模型参数 $\theta$ 的梯度 $\nabla_{\theta}L(\theta)$。
-* 使用 Adam 等优化器执行梯度下降。
+* **平均损失汇总**：每一个样本 $i$ 根据自身的 `ratio` 和独立优势值 $A_i$ 算出一个独立的损失函数值 $L_i(\theta)$。系统将这 80 个样本的独立损失求平均，汇聚成一个宏观的总体标量损失值：
+  
+  $$
+  L_{total} = \frac{1}{80} \sum_{i=1}^{80} L_i(\theta)
+  $$
+* **梯度下降**：计算目标函数 $L(\theta)$ 对模型参数 $\theta$ 的梯度 $\nabla_{\theta}L(\theta)$，通过调用 `.backward()` 使这 80 个样本各自产生的梯度在网络参数上累加。
+* **参数更新**：使用 Adam 等优化器执行梯度下降 (`optimizer.step()`)。
 * **更新完成**：Actor 模型演进为更优版本 $\theta_{new}$。
 
 整个闭环示例 (以 prompt_idx = 0 为例)
@@ -69,6 +78,6 @@ $$
 4. **反向传播**：模型权重朝着“生成类似 prompt_idx=0 高分回复的概率方向”移动了一小步。
 
 
+<img width="2206" height="1920" alt="Gemini_Generated_Image_1zwpl61zwpl61zwp (2)" src="https://github.com/user-attachments/assets/7c9a1aa7-0cfd-4612-8003-69fd667247f4" />
+<img width="1024" height="891" alt="3ed78b74-9dbd-4c82-acbd-4b9573682ccb" src="https://github.com/user-attachments/assets/9fa89608-1763-441f-8da1-3981eedf623a" />
 
-<img width="2816" height="1536" alt="Gemini_Generated_Image_yr4s97yr4s97yr4s" src="https://github.com/user-attachments/assets/1261083f-7336-4a6b-9779-ce3192acc562" />
-<img width="2816" height="1536" alt="Gemini_Generated_Image_yr4s97yr4s97yr4s (1)" src="https://github.com/user-attachments/assets/1bf75fa4-c42e-4f93-8c8c-a267bc7e7da6" />
